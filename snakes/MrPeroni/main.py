@@ -44,15 +44,28 @@ def end(game_state: typing.Dict):
 # See https://docs.battlesnake.com/api/example-move for available data
 def move(game_state: typing.Dict) -> typing.Dict:
 
-    from agent import Agent
-    agg = Agent(game_state)
-    print(agg.grid.values())
-
     is_move_safe = {"up": True, "down": True, "left": True, "right": True}
 
     # We've included code to prevent your Battlesnake from moving backwards
     my_head = game_state["you"]["body"][0]  # Coordinates of your head
     my_neck = game_state["you"]["body"][1]  # Coordinates of your "neck"
+
+    from agent import Agent
+    agg = Agent(game_state)
+
+    next_step = agg.compute_step()
+    if next_step != None:
+        x, y = next_step
+        # print(f"{x},{y}")
+        # print(my_head["x"], my_head["y"])
+        if x == my_head["x"] + 1:
+            return {"move": "right"}
+        elif x == my_head["x"] - 1:
+            return {"move": "left"}
+        elif y == my_head["y"] + 1:
+            return {"move": "up"}
+        elif y == my_head["y"] - 1:
+            return {"move": "down"}
 
     if my_neck["x"] < my_head["x"]:  # Neck is left of head, don't move left
         is_move_safe["left"] = False
