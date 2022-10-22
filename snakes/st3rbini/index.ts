@@ -12,6 +12,7 @@
 
 import runServer from './server';
 import { GameState, InfoResponse, MoveResponse } from './types';
+import {Battlesnake, Coord} from "../../starter-kits/starter-snake-typescript/types";
 
 type Moves = "T"|"L"|"R"|"B";
 let lastMove = "";
@@ -44,6 +45,59 @@ function end(gameState: GameState): void {
 
 function getNumberOfMoves(isMoveSafe: { [key:string]: boolean; }) {
   return Number(isMoveSafe.up)+Number(isMoveSafe.left)+Number(isMoveSafe.down)+Number(isMoveSafe.right);
+}
+
+function getMovesWeights(head: Coord, snakes: Battlesnake[], safeMoves: string[]) {
+  // Weights go from -1 to 15, where -1 is highly discouraged.
+  let moveWeights: { [key:string]: number; } = {
+    up: 0,
+    down: 0,
+    left: 0,
+    right: 0
+  };
+
+  Object.keys(moveWeights).forEach(key => {
+    // If the move is not safe, then the weight shall be -1 (highly discouraged)
+    if(!safeMoves.includes(key))
+      moveWeights[key] = -1;
+
+    // do not compute is the move weight is already < 0
+    if(key === "up" && moveWeights[key] === 0) {
+      let particles: number[] = [];
+      // get all snakes on same x
+      snakes.forEach(snake => {
+        particles = particles.concat(snake.body.filter(particle => (particle.x === head.x) && (particle.y > head.y))
+            .map(particle => particle.y - head.y));
+      });
+      moveWeights[key] = Math.min(...particles);
+    } else if(key === "down" && moveWeights[key] === 0) {
+      let particles: number[] = [];
+      // get all snakes on same x
+      snakes.forEach(snake => {
+        particles = particles.concat(snake.body.filter(particle => (particle.x === head.x) && (particle.y < head.y))
+            .map(particle => head.y - particle.y));
+      });
+      moveWeights[key] = Math.min(...particles);
+    } else if(key === "left" && moveWeights[key] === 0) {
+      let particles: number[] = [];
+      // get all snakes on same y
+      snakes.forEach(snake => {
+        particles = particles.concat(snake.body.filter(particle => (particle.y === head.y) && (particle.x < head.x))
+            .map(particle => head.x - particle.x));
+      });
+      moveWeights[key] = Math.min(...particles);
+    } else if(key === "right" && moveWeights[key] === 0) {
+      let particles: number[] = [];
+      // get all snakes on same y
+      snakes.forEach(snake => {
+        particles = particles.concat(snake.body.filter(particle => (particle.y === head.y) && (particle.x > head.x))
+            .map(particle => particle.x - head.x));
+      });
+      moveWeights[key] = Math.min(...particles);
+    }
+  });
+
+  return moveWeights;
 }
 
 // move is called on every turn and returns your next move
@@ -89,6 +143,7 @@ function move(gameState: GameState): MoveResponse {
     isMoveSafe.left = false;
 
 
+
   // Disable moves against its own body
   gameState.you.body.forEach(particle => {
     // Stessa Y 
@@ -114,7 +169,8 @@ function move(gameState: GameState): MoveResponse {
     }
   });
 
-  console.log(gameState);
+
+
   // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
   // myBody = gameState.you.body;
 
@@ -123,28 +179,16 @@ function move(gameState: GameState): MoveResponse {
 
   // Are there any safe moves left?
   const safeMoves = Object.keys(isMoveSafe).filter((key:string) => isMoveSafe[key]);
-  
-  /*
-  if(safeMoves.length > 1) {
-    // Pick the move that takes the snake far away from the tail
-    safeMoves.filter(move => {
-      return (move === 'down' && myTail.y > myHead.y) ||
-        (move === 'up' && myTail.y < myHead.y) ||
-        (move === 'left' && myTail.x > myHead.x) ||
-        (move === 'right' && myTail.x < myHead.x);
-    });
-  }  */
 
-  // TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-  // food = gameState.board.food;
+  const weights = getMovesWeights(myHead, gameState.board.snakes, safeMoves);
+  let nextMove = <string>Object.keys(weights).sort((prev, next) => weights[prev] - weights[next]).pop();
 
-  let nextMove = "down";
-  if(safeMoves.length > 0) {
+  console.log(weights, nextMove);
+  /* if(safeMoves.length > 0) {
     nextMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
-  }
+  } */
 
   console.log(`MOVE ${gameState.turn}: ${nextMove}`)
-  lastMove = nextMove;
   return { move: nextMove };
 }
 
