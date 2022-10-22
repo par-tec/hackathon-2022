@@ -2,9 +2,12 @@ import itertools
 import networkx as nx
 import math
 import numpy as np
+from random import random
 
 class Agent:
     def __init__(self, game_state):
+        self.p = 0.75
+        self.h = game_state["you"]["health"]
         self.head = game_state["you"]["head"]
         self.board = game_state["board"]
 
@@ -35,15 +38,25 @@ class Agent:
                 map(lambda pox: math.dist(self.head, pox), self.board["food"])
             )
         ]
+    
+    def scores(self):
+        return sorted(
+            self.board["food"],
+            key=lambda p: math.dist(
+                (p["x"], p["y"]),
+                (self.board["width"]/2, self.board["height"]/2)
+            )
+        )
 
     def compute_step(self):
         spt = nx.shortest_path(self.graph_grid, (self.head["x"], self.head["y"]))
 
         if len(self.board["food"]) != 0:
-            for food_point in self.board["food"]:
+            # foods = self.scores() if random() <= 2/6 else self.board["food"]
+            for food_point in self.scores(): # euristica
                 i, j = food_point["x"], food_point["y"]
                 target_point = (i,j)
 
                 if target_point in spt.keys():
-                    return spt[target_point][1] 
+                    return spt[target_point][1]
         return None
