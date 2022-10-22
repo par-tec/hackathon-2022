@@ -12,6 +12,12 @@
 
 import random
 import typing
+import pprint
+
+FREE = ' '
+FOOD = 'o'
+WALL = '*'
+SNAKE = '+'
 
 
 # info is called when you create your Battlesnake on play.battlesnake.com
@@ -38,58 +44,108 @@ def start(game_state: typing.Dict):
 def end(game_state: typing.Dict):
     print("GAME OVER\n")
 
+def init_board(game_state: typing.Dict):
+    # init board
+    pprint.pprint(game_state)
+    
+    board = [[FREE for x in range(game_state['board']['width'] + 2)] for y in range(game_state['board']['height'] + 2)]
+    
+    for x in range(game_state['board']['width'] + 2):
+        for y in range(game_state['board']['height'] + 2):
+            if x == 0 or x == game_state['board']['width'] + 1 or y == 0 or y == game_state['board']['height'] + 1:
+                board[x][y] = WALL
+    
+    for food in game_state['board']['food']:
+        board[ food["x"] + 1 ][ food["y"] + 1 ] = FOOD
 
+    for you in game_state['you']['body']:
+        board[you["x"] + 1][you["y"] + 1] = SNAKE
+
+    for snakes in game_state['board']['snakes']:
+        for s in snakes['body']:
+            board[s["x"] + 1][s["y"] + 1] = SNAKE
+
+    return board
+
+def can_move(direction, board, my_head):
+    return look_at(direction, board, my_head, FOOD) or look_at(direction, board, my_head, FREE)
+
+def check_food(direction, board, my_head):
+    return look_at(direction, board, my_head, FOOD)
+
+
+def look_at(direction, board, my_head, what):
+    if direction == 'up':
+        return board[ my_head["x"]][ my_head["y"] + 1 ] == what
+    
+    if direction == 'down':
+        return board[ my_head["x"]][ my_head["y"] - 1 ] == what
+
+    if direction == 'right':
+        return board[ my_head["x"] + 1][ my_head["y"] ] == what
+        
+    if direction == 'left':
+        return board[ my_head["x"] - 1][ my_head["y"] ] == what
+    return False
+
+def my_direction(game_state):
+
+    my_head = game_state["you"]["body"][0]  # Coordinates of your head
+    my_neck = game_state["you"]["body"][1]  # Coordinates of your neck
+    my_neck["x"] = my_neck["x"] + 1
+    my_neck["y"] = my_neck["y"] + 1
+    
+    if my_head['x'] == my_neck['x']:
+        if my_head['y'] + 1 == my_neck['y']:
+            print("direction: down")
+            return 'down'
+        if my_head['y'] - 1 == my_neck['y']:
+            print("direction: up")
+            return 'up'
+
+    if my_head['y'] == my_neck['y']:
+        if my_head['x'] + 1 == my_neck['x']:
+            print("direction: left")
+            return 'left'
+        if my_head['x'] - 1 == my_neck['x']:
+            print("direction: right")
+            return 'right'
+        
+        
 # move is called on every turn and returns your next move
 # Valid moves are "up", "down", "left", or "right"
 # See https://docs.battlesnake.com/api/example-move for available data
 def move(game_state: typing.Dict) -> typing.Dict:
-
-    is_move_safe = {"up": True, "down": True, "left": True, "right": True}
-
-    # We've included code to prevent your Battlesnake from moving backwards
+    
+    board = init_board(game_state)
     my_head = game_state["you"]["body"][0]  # Coordinates of your head
-    my_neck = game_state["you"]["body"][1]  # Coordinates of your "neck"
+    my_head["x"] = my_head["x"] + 1
+    my_head["y"] = my_head["y"] + 1
 
-    if my_neck["x"] < my_head["x"]:  # Neck is left of head, don't move left
-        is_move_safe["left"] = False
+    pprint.pprint(board)
+    pprint.pprint(my_head)
 
-    elif my_neck["x"] > my_head["x"]:  # Neck is right of head, don't move right
-        is_move_safe["right"] = False
+    preferred_directions = ['up', 'right', 'down', 'left']
 
-    elif my_neck["y"] < my_head["y"]:  # Neck is below head, don't move down
-        is_move_safe["down"] = False
 
-    elif my_neck["y"] > my_head["y"]:  # Neck is above head, don't move up
-        is_move_safe["up"] = False
+    my_actual_direction = my_direction(game_state)
+    print("my actual direction: %s" % my_actual_direction)
 
-    # TODO: Step 1 - Prevent your Battlesnake from moving out of bounds
-    # board_width = game_state['board']['width']
-    # board_height = game_state['board']['height']
+    preferred_directions = [my_actual_direction] + preferred_directions
+    
+    for d in ['up', 'right', 'down', 'left']:
+        if check_food(d, board, my_head):
+            preferred_directions = [d] + preferred_directions
+            print(f"FOOD found food!!!!")
+            print(preferred_directions)
 
-    # TODO: Step 2 - Prevent your Battlesnake from colliding with itself
-    # my_body = game_state['you']['body']
 
-    # TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-    # opponents = game_state['board']['snakes']
+    for d in preferred_directions:
+        if can_move(d, board, my_head):
+            print(f"MOVE {game_state['turn']}: {d}")
+            return {"move": d}
 
-    # Are there any safe moves left?
-    safe_moves = []
-    for move, isSafe in is_move_safe.items():
-        if isSafe:
-            safe_moves.append(move)
-
-    if len(safe_moves) == 0:
-        print(f"MOVE {game_state['turn']}: No safe moves detected! Moving down")
-        return {"move": "down"}
-
-    # Choose a random move from the safe ones
-    next_move = random.choice(safe_moves)
-
-    # TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-    # food = game_state['board']['food']
-
-    print(f"MOVE {game_state['turn']}: {next_move}")
-    return {"move": next_move}
+    return {"move": 'down'}
 
 
 # Start server when `python main.py` is run
