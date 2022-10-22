@@ -1,0 +1,110 @@
+{
+    "board": {
+        "food": [
+            {
+                "x": 0,
+                "y": 2
+            },
+            {
+                "x": 5,
+                "y": 5
+            }
+        ],
+        "hazards": [],
+        "height": 11,
+        "snakes": [
+            {
+                "body": [
+                    {
+                        "x": 2,
+                        "y": 0
+                    },
+                    {
+                        "x": 2,
+                        "y": 1
+                    },
+                    {
+                        "x": 1,
+                        "y": 1
+                    }
+                ],
+                "customizations": {
+                    "color": "#297516",
+                    "head": "safe",
+                    "tail": "freckled"
+                },
+                "head": {
+                    "x": 2,
+                    "y": 0
+                },
+                "health": 98,
+                "id": "728a60c4-c28c-4676-bfd2-86df05c6d400",
+                "latency": "0",
+                "length": 3,
+                "name": "Python Starter Project",
+                "shout": "",
+                "squad": ""
+            }
+        ],
+        "width": 11
+    },
+    "game": {
+        "id": "497d9fd7-f6f1-4855-9b12-af760c220f41",
+        "map": "standard",
+        "ruleset": {
+            "name": "solo",
+            "settings": {
+                "foodSpawnChance": 15,
+                "hazardDamagePerTurn": 14,
+                "hazardMap": "",
+                "hazardMapAuthor": "",
+                "minimumFood": 1,
+                "royale": {
+                    "shrinkEveryNTurns": 25
+                },
+                "squad": {
+                    "allowBodyCollisions": false,
+                    "sharedElimination": false,
+                    "sharedHealth": false,
+                    "sharedLength": false
+                }
+            },
+            "version": "cli"
+        },
+        "source": "",
+        "timeout": 500
+    },
+    "turn": 2,
+    "you": {
+        "body": [
+            {
+                "x": 2,
+                "y": 0
+            },
+            {
+                "x": 2,
+                "y": 1
+            },
+            {
+                "x": 1,
+                "y": 1
+            }
+        ],
+        "customizations": {
+            "color": "#297516",
+            "head": "safe",
+            "tail": "freckled"
+        },
+        "head": {
+            "x": 2,
+            "y": 0
+        },
+        "health": 98,
+        "id": "728a60c4-c28c-4676-bfd2-86df05c6d400",
+        "latency": "0",
+        "length": 3,
+        "name": "Python Starter Project",
+        "shout": "",
+        "squad": ""
+    }
+}

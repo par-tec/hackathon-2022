@@ -1,0 +1,35 @@
+game_state:
+
+    board:
+        food: lista di punti 
+        height: N
+        width: M
+        snakes: lista di snake
+        hazards: []
+
+    game:
+        id:
+        map: tipo della mappa
+        ...
+
+    turn: numero di turno
+
+    you:
+        body: lista di punti del corpo del serpente
+        head: {coordinate della testa del serpente}
+        health: salute ?
+        id: id del serpente
+        latency: ?
+        length: lunghezza
+        name: nome del serpente
+        shout: ?
+        squad: ?
+
+
+Struttura della tabella
+0,H 1,H
+.
+.
+0,2 1,2 ... W,2
+0,1 1,1 ... W,1 
+0,0 1,0 ... W,0
