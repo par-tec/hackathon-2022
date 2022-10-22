@@ -7,6 +7,9 @@ class Agent:
         # Cibo
         for food in self.board["food"]:
             self.grid[(food["x"],food["y"])] = 2
-        # Avversari
-        # for snake in self.board["snakes"]:
-        #     if snake.
+        # Corpo dei serpenti (compreso il mio)
+        for snake in self.board["snakes"]:
+            for pox in snake["body"]:
+                self.grid[(pox["x"], pox["y"])] = 1
+        # Togli la testa
+        self.grid[(game_state["you"]["head"]["x"], game_state["you"]["head"]["y"])] = 0
