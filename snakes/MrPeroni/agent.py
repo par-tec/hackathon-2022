@@ -1,5 +1,4 @@
 import itertools
-from matplotlib.pyplot import grid
 import networkx as nx
 import math
 import numpy as np
@@ -29,6 +28,7 @@ class Agent:
             if self.grid[i,j] == 1:
                 self.graph_grid.remove_node((i,j))
 
+    @np.deprecate
     def get_nearest_food(self):
         return self.board["food"][
             np.argmin( 
@@ -37,15 +37,13 @@ class Agent:
         ]
 
     def compute_step(self):
-        # bfs_t = nx.bfs_tree(self.graph_grid, (self.head["x"], self.head["y"]))
         spt = nx.shortest_path(self.graph_grid, (self.head["x"], self.head["y"]))
 
-        # point = self.board["food"][0]
-        point = self.get_nearest_food()
-        i, j = point["x"], point["y"]
-        target_point = (i,j)
+        if len(self.board["food"]) != 0:
+            for food_point in self.board["food"]:
+                i, j = food_point["x"], food_point["y"]
+                target_point = (i,j)
 
-        if target_point in spt.keys():
-            return spt[target_point][1]
-        else:
-            return None
+                if target_point in spt.keys():
+                    return spt[target_point][1] 
+        return None

@@ -50,6 +50,23 @@ def move(game_state: typing.Dict) -> typing.Dict:
     my_head = game_state["you"]["body"][0]  # Coordinates of your head
     my_neck = game_state["you"]["body"][1]  # Coordinates of your "neck"
 
+    from agent import Agent
+    agg = Agent(game_state)
+
+    next_step = agg.compute_step()
+    if next_step != None:
+        x, y = next_step
+        # print(f"{x},{y}")
+        # print(my_head["x"], my_head["y"])
+        if x == my_head["x"] + 1:
+            return {"move": "right"}
+        elif x == my_head["x"] - 1:
+            return {"move": "left"}
+        elif y == my_head["y"] + 1:
+            return {"move": "up"}
+        elif y == my_head["y"] - 1:
+            return {"move": "down"}
+
     if my_neck["x"] < my_head["x"]:  # Neck is left of head, don't move left
         is_move_safe["left"] = False
 
@@ -62,89 +79,65 @@ def move(game_state: typing.Dict) -> typing.Dict:
     elif my_neck["y"] > my_head["y"]:  # Neck is above head, don't move up
         is_move_safe["up"] = False
 
-    from agent import Agent
-    agg = Agent(game_state)
+    # TODO: Step 1 - Prevent your Battlesnake from moving out of bounds
+    board_width = game_state['board']['width']
+    board_height = game_state['board']['height']
 
-    next_step = agg.compute_step()
-    if next_step != None:
-        print("QAU")
-        x,y = next_step
-        print(f"{x},{y}")
-        print(my_head["x"], my_head["y"])
-        if x == my_head["x"] + 1:
-            return {"move": "right"}
-        elif x == my_head["x"] - 1:
-            return {"move": "left"}
-        elif y == my_head["y"] + 1:
-            return {"move": "up"}
-        elif y == my_head["y"] - 1:
-            return {"move": "down"}
-        else:
-            print("CAZZOOOOOOOOOOOOOOO!!!!!!!!111111")
-            return {"move": "left"}
+    if my_head["x"] == 0: # don't go left
+        is_move_safe["left"] = False
+    if my_head["x"] == board_width-1: # don't go right
+        is_move_safe["right"] = False
 
-    else:
-        print("NO QAU")
+    if my_head["y"] == 0: # don't go down
+        is_move_safe["down"] = False
+    if my_head["y"] == board_height-1: # don't go up
+        is_move_safe["up"] = False
+    
+    # TODO: Step 2 - Prevent your Battlesnake from colliding with itself
+    my_body = game_state['you']['body']
 
-        # TODO: Step 1 - Prevent your Battlesnake from moving out of bounds
-        board_width = game_state['board']['width']
-        board_height = game_state['board']['height']
+    def hit_itself(x, y, body) -> bool:
+        for cell in body:
+            if x == cell["x"] and y == cell["y"]:
+                return True
+        return False
+    
+    is_move_safe["up"] = (not hit_itself(my_head["x"], my_head["y"]+1, my_body)) and is_move_safe["up"] 
+    is_move_safe["down"] = (not hit_itself(my_head["x"], my_head["y"]-1, my_body)) and is_move_safe["down"] 
+    is_move_safe["left"] = (not hit_itself(my_head["x"]-1, my_head["y"], my_body)) and is_move_safe["left"] 
+    is_move_safe["right"] = (not hit_itself(my_head["x"]+1, my_head["y"], my_body)) and is_move_safe["right"] 
 
-        if my_head["x"] == 0: # don't go left
-            is_move_safe["left"] = False
-        if my_head["x"] == board_width-1: # don't go right
-            is_move_safe["right"] = False
+    # TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
+    opponents = game_state['board']['snakes']
+    
+    def hit_opponent(x, y, opponent) -> bool:
+        return hit_itself(x, y, opponent["body"])
 
-        if my_head["y"] == 0: # don't go down
-            is_move_safe["down"] = False
-        if my_head["y"] == board_height-1: # don't go up
-            is_move_safe["up"] = False
-        
-        # TODO: Step 2 - Prevent your Battlesnake from colliding with itself
-        my_body = game_state['you']['body']
+    for opponent in opponents:
+        if opponent["id"] != game_state["you"]["id"]:
+            is_move_safe["up"] = (not hit_opponent(my_head["x"], my_head["y"]+1, opponent)) and is_move_safe["up"] 
+            is_move_safe["down"] = (not hit_opponent(my_head["x"], my_head["y"]-1, opponent)) and is_move_safe["down"] 
+            is_move_safe["left"] = (not hit_opponent(my_head["x"]-1, my_head["y"], opponent)) and is_move_safe["left"] 
+            is_move_safe["right"] = (not hit_opponent(my_head["x"]+1, my_head["y"], opponent)) and is_move_safe["right"]
 
-        def hit_itself(x, y, body) -> bool:
-            for cell in body:
-                if x == cell["x"] and y == cell["y"]:
-                    return True
-            return False
-        
-        is_move_safe["up"] = (not hit_itself(my_head["x"], my_head["y"]+1, my_body)) and is_move_safe["up"] 
-        is_move_safe["down"] = (not hit_itself(my_head["x"], my_head["y"]-1, my_body)) and is_move_safe["down"] 
-        is_move_safe["left"] = (not hit_itself(my_head["x"]-1, my_head["y"], my_body)) and is_move_safe["left"] 
-        is_move_safe["right"] = (not hit_itself(my_head["x"]+1, my_head["y"], my_body)) and is_move_safe["right"] 
+    # Are there any safe moves left?
+    safe_moves = []
+    for move, isSafe in is_move_safe.items():
+        if isSafe:
+            safe_moves.append(move)
 
-        # TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-        opponents = game_state['board']['snakes']
-        
-        def hit_opponent(x, y, opponent) -> bool:
-            return hit_itself(x, y, opponent["body"])
+    if len(safe_moves) == 0:
+        print(f"MOVE {game_state['turn']}: No safe moves detected! Moving down")
+        return {"move": "down"}
 
-        for opponent in opponents:
-            if opponent["id"] != game_state["you"]["id"]:
-                is_move_safe["up"] = (not hit_opponent(my_head["x"], my_head["y"]+1, opponent)) and is_move_safe["up"] 
-                is_move_safe["down"] = (not hit_opponent(my_head["x"], my_head["y"]-1, opponent)) and is_move_safe["down"] 
-                is_move_safe["left"] = (not hit_opponent(my_head["x"]-1, my_head["y"], opponent)) and is_move_safe["left"] 
-                is_move_safe["right"] = (not hit_opponent(my_head["x"]+1, my_head["y"], opponent)) and is_move_safe["right"]
+    # Choose a random move from the safe ones
+    next_move = random.choice(safe_moves)
 
-        # Are there any safe moves left?
-        safe_moves = []
-        for move, isSafe in is_move_safe.items():
-            if isSafe:
-                safe_moves.append(move)
+    # TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
+    # food = game_state['board']['food']
 
-        if len(safe_moves) == 0:
-            print(f"MOVE {game_state['turn']}: No safe moves detected! Moving down")
-            return {"move": "down"}
-
-        # Choose a random move from the safe ones
-        next_move = random.choice(safe_moves)
-
-        # TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-        # food = game_state['board']['food']
-
-        print(f"MOVE {game_state['turn']}: {next_move}")
-        return {"move": next_move}
+    print(f"MOVE {game_state['turn']}: {next_move}")
+    return {"move": next_move}
 
 
 # Start server when `python main.py` is run
