@@ -12,7 +12,6 @@
 
 import random
 import typing
-from pprint import pprint
 
 # info is called when you create your Battlesnake on play.battlesnake.com
 # and controls your Battlesnake's appearance
@@ -50,14 +49,17 @@ def move(game_state: typing.Dict) -> typing.Dict:
     my_head = game_state["you"]["body"][0]  # Coordinates of your head
     my_neck = game_state["you"]["body"][1]  # Coordinates of your "neck"
 
+    # Instantiate the agent
     from agent import Agent
     agg = Agent(game_state)
 
+    # Compute the next step
     next_step = agg.compute_step()
+
+    # If the agent is able to compute the next step
     if next_step != None:
         x, y = next_step
-        # print(f"{x},{y}")
-        # print(my_head["x"], my_head["y"])
+
         if x == my_head["x"] + 1:
             return {"move": "right"}
         elif x == my_head["x"] - 1:
@@ -66,6 +68,9 @@ def move(game_state: typing.Dict) -> typing.Dict:
             return {"move": "up"}
         elif y == my_head["y"] - 1:
             return {"move": "down"}
+
+    # If the agent is not able to compute the next step
+    # compute the next step according the policy 'avoid obstacles'
 
     if my_neck["x"] < my_head["x"]:  # Neck is left of head, don't move left
         is_move_safe["left"] = False
@@ -96,29 +101,29 @@ def move(game_state: typing.Dict) -> typing.Dict:
     # TODO: Step 2 - Prevent your Battlesnake from colliding with itself
     my_body = game_state['you']['body']
 
-    def hit_itself(x, y, body) -> bool:
+    def hit(x, y, body) -> bool:
+        """
+            Check if a point (`x`, `y`) hits a body
+        """
         for cell in body:
             if x == cell["x"] and y == cell["y"]:
                 return True
         return False
     
-    is_move_safe["up"] = (not hit_itself(my_head["x"], my_head["y"]+1, my_body)) and is_move_safe["up"] 
-    is_move_safe["down"] = (not hit_itself(my_head["x"], my_head["y"]-1, my_body)) and is_move_safe["down"] 
-    is_move_safe["left"] = (not hit_itself(my_head["x"]-1, my_head["y"], my_body)) and is_move_safe["left"] 
-    is_move_safe["right"] = (not hit_itself(my_head["x"]+1, my_head["y"], my_body)) and is_move_safe["right"] 
+    is_move_safe["up"] = (not hit(my_head["x"], my_head["y"]+1, my_body)) and is_move_safe["up"] 
+    is_move_safe["down"] = (not hit(my_head["x"], my_head["y"]-1, my_body)) and is_move_safe["down"] 
+    is_move_safe["left"] = (not hit(my_head["x"]-1, my_head["y"], my_body)) and is_move_safe["left"] 
+    is_move_safe["right"] = (not hit(my_head["x"]+1, my_head["y"], my_body)) and is_move_safe["right"] 
 
     # TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
     opponents = game_state['board']['snakes']
-    
-    def hit_opponent(x, y, opponent) -> bool:
-        return hit_itself(x, y, opponent["body"])
 
     for opponent in opponents:
         if opponent["id"] != game_state["you"]["id"]:
-            is_move_safe["up"] = (not hit_opponent(my_head["x"], my_head["y"]+1, opponent)) and is_move_safe["up"] 
-            is_move_safe["down"] = (not hit_opponent(my_head["x"], my_head["y"]-1, opponent)) and is_move_safe["down"] 
-            is_move_safe["left"] = (not hit_opponent(my_head["x"]-1, my_head["y"], opponent)) and is_move_safe["left"] 
-            is_move_safe["right"] = (not hit_opponent(my_head["x"]+1, my_head["y"], opponent)) and is_move_safe["right"]
+            is_move_safe["up"] = (not hit(my_head["x"], my_head["y"]+1, opponent["body"])) and is_move_safe["up"] 
+            is_move_safe["down"] = (not hit(my_head["x"], my_head["y"]-1, opponent["body"])) and is_move_safe["down"] 
+            is_move_safe["left"] = (not hit(my_head["x"]-1, my_head["y"], opponent["body"])) and is_move_safe["left"] 
+            is_move_safe["right"] = (not hit(my_head["x"]+1, my_head["y"], opponent["body"])) and is_move_safe["right"]
 
     # Are there any safe moves left?
     safe_moves = []
